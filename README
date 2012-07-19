@@ -1,1 +1,3 @@
 These ruby scripts build upon the Nexpose GEM to help Nexpose administrators manage their Nexpose environments.  Each script is independent of others, unless otherwise noted.
+
+Refer to the GitHub Wiki for documentation for each.
