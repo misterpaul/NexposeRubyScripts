@@ -1,0 +1,45 @@
+================================================
+= Overview
+================================================
+
+ScanPlanReporter is a tool to look at your scan schedule and help
+you determine the results of each site's last scan, and plan
+future scans.  It is particularly helpful for determining:
+* Did my last scans complete successfully? (Right now, Nexpose's
+  GUI shows scans that were stopped as having completed, so
+  ScanPlanReporter helps you find the real results.)
+* How long did the last scans take?
+* What scanners is each site using? (Helpful to manually
+  balance the load)
+
+================================================
+= How to run ScanPlanReporter
+================================================
+
+1) install ruby (or make sure it is in your PATH)
+2) ruby ScanPlanReporter.rb
+
+ScanPlanReporter will ask a few questions first:
+* What is the name of your Nexpose console server
+* What port are you using (default for Nexpose is 3780)
+* ID and password to use to log in
+* File to save the results in.
+
+================================================
+= Sample results
+================================================
+
+Site Name,Last Scan Start,Last Scan Status,Last Scan Live Nodes,Last Scan Duration,Scan Template,Scan Engine,Next Scan Start,Schedule
+Site 1,2012-07-02 06:00:14 -0400,finished,579,7h 33m 36s,My Scan Template,Local scan engine (active),NEXT SCAN,SCHEDULE
+Site 2,2012-07-06 16:30:07 -0400,aborted,813,7h 49m 48s,My Scan Template,Local scan engine (active),NEXT SCAN,SCHEDULE
+
+See ScanPlanReporter_sample_output.png for a screenshot of this in 
+a spreadsheet.
+
+================================================
+= To do
+================================================
+
+I have not yet built in the next scan info.  This is well covered 
+by the Nexpose GUI in the Schedule Calendar, so there is little 
+reason to implement it here.
