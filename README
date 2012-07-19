@@ -1,3 +1,10 @@
 These ruby scripts build upon the Nexpose GEM to help Nexpose administrators manage their Nexpose environments.  Each script is independent of others, unless otherwise noted.
 
-Refer to the GitHub Wiki for documentation for each.
+Each script has its own directory, with a README in that directory.
+
+These scripts make use of ruby gems and assume you know how to get and install them.  If you don't, here is a starter:
+1. Go to http://rubygems.org/gems/nexpose to get the Nexpose Ruby Gem.
+2. At your command line, run:
+  gem install nexpose
+
+I am a Perl programmer, and this is my first foray into Ruby.  It is probably obvious in the code!  Over time, I expect the coding style to improve, but it is pretty scrappy for now. Feel free to offer bug fixes and stylistic improvements!

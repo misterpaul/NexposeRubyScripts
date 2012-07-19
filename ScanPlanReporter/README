@@ -16,8 +16,8 @@ future scans.  It is particularly helpful for determining:
 = How to run ScanPlanReporter
 ================================================
 
-1) install ruby (or make sure it is in your PATH)
-2) ruby ScanPlanReporter.rb
+Run:
+ruby ScanPlanReporter.rb
 
 ScanPlanReporter will ask a few questions first:
 * What is the name of your Nexpose console server
