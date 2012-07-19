@@ -12,7 +12,7 @@
 #   Schedule         (Not implemented yet)
 
 # March 6, 2012
-# Paul Faulstich
+# misterpaul
 
 # you probably want to change the defaults below
 
