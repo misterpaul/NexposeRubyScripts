@@ -1,0 +1,39 @@
+================================================
+= Overview
+================================================
+
+NetworkCoverageReporter is a tool to help you determine if you
+have configured Nexpose to cover your full network, and to
+help detect any duplication
+
+================================================
+= How to run NetworkCoverageReporter
+================================================
+
+Run:
+ruby NetworkCoverageReporter.rb
+
+NetworkCoverageReporter will ask a few questions first:
+* What is the name of your Nexpose console server
+* What port are you using (default for Nexpose is 3780)
+* ID and password to use to log in
+* File to save the results in.
+
+================================================
+= Sample results
+================================================
+
+IP Range,Site
+10.0.8.1 - 10.0.8.255,Site 1
+10.0.88.1 - 10.0.88.254,Site 2
+10.1.111.1 - 10.1.111.254,Site 3
+10.1.112.1 - 10.1.119.254,Site 3
+
+See NetworkCoverageReporter_sample_output.png for a screenshot of this in 
+a spreadsheet.
+
+================================================
+= To do
+================================================
+
+no changes planned at this point.
