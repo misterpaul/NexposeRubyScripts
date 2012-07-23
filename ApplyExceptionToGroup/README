@@ -1,0 +1,97 @@
+================================================
+= Overview
+================================================
+
+ApplyExceptionToGroup is a tool to assist you with applying vulnerability
+exceptions to a dynamic asset group. In my mind, this is Nexpose's biggest
+current shortcoming.  Hopefully, Rapid7 will implement this functionality
+in Nexpose soon, and this script will become obsolete!
+
+Say you have 100 red hat servers that report a dozen OpenSSH false positives
+(Red Hat users know this situation well), you only need to:
+* create an exception on a single server for each false positive vulnerability
+* create a dynamic asset group that identifies all the impacted servers
+* run this script to apply the exception to all the assets in that group
+
+Over time, membership in that dynamic asset group may grow.  This script 
+checks for duplicates, so you can use this script again, and it will only 
+create exceptions for assets that didn't already have this specific exception.
+
+================================================
+= How to run ApplyExceptionToGroup
+================================================
+
+Run:
+ruby ApplyExceptionToGroup.rb
+
+ApplyExceptionToGroup will ask a few questions first:
+* What is the name of your Nexpose console server
+* What port are you using (default for Nexpose is 3780)
+* ID and password to use to log in
+* File to save the results in.
+
+Then, it asks for the filename to use to create a list of current exceptions.
+You will need this list to determine the exception number(s) to apply to the
+dynamic asset group.  But, if you run this script multiple times, you only 
+need it once.  You can enter "none" for the file name and it will skip the 
+file creation.
+
+I recommend opening the vulnerability list in a spreadsheet, and filtering as needed
+to stay organized. (I typically filter by the submitter, status, and maybe Vuln ID.)
+
+The script will then ask you for the ids of the exceptions to replicate.  You can apply
+multiple exceptions to your group at once by separating the exceptions ids with spaces. 
+At this point, you need to dig through your spreadsheet and find the id's of the  exceptions 
+you want to apply to this group.  NOTE: Don't use the numbers from the Nexpose GUI!  Nexpose
+builds a table on the fly with its own unique ids; they are not the exception id. I have 
+been unable to find the exception id within the GUI.  If it is there, give me feedback and 
+I'll update this.
+
+Next, the script asks for a string to filter your group list.  You don't need to filter for
+anything, but if you have a ton of dynamic asset groups (as I do), this may help. I 
+organize my dynamic asset groups with standard prefixes.  I use "Exception Assets:" 
+as a prefix for any dynamic groups I create for this script.  For example, I might 
+have the group "Exception Assets: Red Hat Servers" for the Red Hat servers that I want 
+to apply the OpenSSH exceptions to.  You'll probably want to edit the code so the default
+is appropriate for you.
+
+After that, the script will list all your groups (that match your filter), and let you pick 
+the group to apply these exceptions to. Enter the number listed (and you can only do one
+group at a time).  NOTE: these are not the Nexpose group ids.
+
+Finally, the script starts creating exceptions for all the assets in your group.  It replicates
+the exception exactly, EXCEPT:
+* the requester is you
+* it inserts text at the beginning of the comment that indicates that this exception was
+  created by the script, who the original requester was, what the exception id is that
+  was used as a template, and what dynamic group was used.
+
+If the folks requesting exceptions are doing a good job documenting the exception in the 
+comments, we might truncate the comment.  Hopefully the info at the top of the comment
+will help you track down the original.
+
+
+================================================
+= Sample results
+================================================
+
+Log for ApplyExceptionToGroup, 2012-07-23--1057
+
+Exception to replicate:
+exception_id: 101, vuln_id: generic-tcp-timestamp, device_id: 10, submitter: joecool, reason: Acceptable Risk, scope: All Instances on a Specific Asset, comment: Allow on all XYZ devices.  Low risk. Zero CVSS score. , port_no: , vuln_key: 
+
+Created Exception:
+exception_id: 200, vuln_id: generic-tcp-timestamp, device_id: 20, reason: Acceptable Risk, scope: All Instances on a Specific Asset, comment: This exception auto-created using ApplyExceptionToGroup ruby script, based on Exception #101 requested by joecool, applied to group 'Exception Assets - XYZ'.
+Allow on all XYZ devices.  Low risk. Zero CVSS score. , port_no: , vuln_key: 
+
+Created Exception:
+exception_id: 201, vuln_id: generic-tcp-timestamp, device_id: 21, reason: Acceptable Risk, scope: All Instances on a Specific Asset, comment: This exception auto-created using ApplyExceptionToGroup ruby script, based on Exception #101 requested by joecool, applied to group 'Exception Assets - XYZ'.
+Allow on all XYZ devices.  Low risk. Zero CVSS score. , port_no: , vuln_key: 
+
+
+================================================
+= Disclaimer
+================================================
+
+This script is a sample. You may need to modify it for your own environment. Use
+at your own risk.  It may contain bugs.
