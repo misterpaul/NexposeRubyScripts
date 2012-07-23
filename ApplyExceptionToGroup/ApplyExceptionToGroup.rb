@@ -180,7 +180,8 @@ begin
 				log.puts # toss an extra line in for clarity
 
 				# check for duplicates
-				#puts asset[:device_id]
+				# a duplicate is an existing exception with the same device id, vulnerability id, scope, port, and vuln key
+				# AND is not deleted
 				dupe = exceptionList.select { |e| 
 					  ( (asset[:device_id].nil? ? '' : asset[:device_id].to_s)       == e[:device_id].to_s) && 
 					  ( replicate[:vuln_id].to_s                                     == e[:vuln_id].to_s  ) &&
