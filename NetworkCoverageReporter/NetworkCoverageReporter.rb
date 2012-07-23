@@ -27,7 +27,7 @@ require 'highline/import'
 defaultHost = "your-host"
 defaultPort = "3780"  
 defaultName = "your-nexpose-id"
-defaultFile = "NetworkCoverageReport" + DateTime.now.strftime('%Y-%m-%d--%H%M') + ".csv"
+defaultFile = "NetworkCoverageReport_" + DateTime.now.strftime('%Y-%m-%d--%H%M') + ".csv"
 
 host = ask("Enter the server name (host) for NeXpose: ") { |q| q.default = defaultHost }
 port = ask ("Enter the port for NeXpose: ") { |q| q.default = defaultPort } 
