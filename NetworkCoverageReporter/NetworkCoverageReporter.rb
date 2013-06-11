@@ -16,9 +16,12 @@ IP Range, Site
 10.0.20.20,Site2
 
 March 6, 2012
-mister paul
+misterpaul
+updated June 10, 2012 to explicitly require nexpose 0.0.98
+
 =end
 
+gem 'nexpose', '=0.0.98'
 require 'rubygems'
 require 'nexpose'
 require 'time'

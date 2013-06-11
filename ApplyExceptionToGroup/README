@@ -28,7 +28,6 @@ ApplyExceptionToGroup will ask a few questions first:
 * What is the name of your Nexpose console server
 * What port are you using (default for Nexpose is 3780)
 * ID and password to use to log in
-* File to save the results in.
 
 Then, it asks for the filename to use to create a list of current exceptions.
 You will need this list to determine the exception number(s) to apply to the

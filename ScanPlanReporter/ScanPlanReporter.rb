@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 # This script generates a comma delimited report to help with scan planning
 # The report shows the following information for every site:
 #   Site Name
@@ -12,7 +14,9 @@
  
 # March 6, 2012
 # misterpaul
- 
+# updated June 10, 2012 to explicitly require nexpose 0.0.98
+
+gem 'nexpose', '=0.0.98'
 require 'nexpose'
 require 'time'
 require 'highline/import'

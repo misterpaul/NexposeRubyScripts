@@ -1,3 +1,5 @@
+#!/usr/bin/env ruby
+
 =begin
 	
 Script: ApplyExceptionToGroup
@@ -60,10 +62,14 @@ will help you track down the original.
 
 This script is a sample. You may need to modify it for your own environment. Use
 at your own risk.  It may contain bugs.
+
+updated June 10, 2012 to explicitly require nexpose 0.0.98
+
 	
 =end
 
 
+gem 'nexpose', '=0.0.98'
 require 'rubygems'
 require 'nexpose'
 require 'highline/import'  
@@ -121,7 +127,7 @@ begin
 	# select which group we're creating exceptions for
 	puts
 	filter = ask ('Enter a string to use to filter the group list. Enter "none" (without quotes) for no filter: ') { |q| q.default = default_filter }
-	grouplist = @nsc.asset_groups_listing.sort_by {|g| g[:name]}.select { |h| filter != 'none' ? h[:name] =~ /#{filter}/ : true }
+	grouplist = @nsc.asset_groups_listing.sort_by {|g| g[:name]}.select { |h| filter != 'none' ? h[:name] =~ /#{filter}/i : true }
 	choicemap = Hash.new
 	choice = choose do |menu|
 		menu.prompt = 'Please select the group to use:'
