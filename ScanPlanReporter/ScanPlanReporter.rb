@@ -12,6 +12,8 @@
 #   Schedule         (Not implemented yet)
  
 # March 6, 2012
+# modified June 10, 2013 with changes suggested by mdaines to support Nexpose gem 0.2.5
+# tested with nexpose 0.2.6 and Ruby 2.0.0
 # misterpaul
  
 require 'nexpose'

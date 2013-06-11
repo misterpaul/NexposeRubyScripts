@@ -12,6 +12,9 @@ future scans.  It is particularly helpful for determining:
 * What scanners is each site using? (Helpful to manually
   balance the load)
 
+As of June 10, 2013, ScanPlanReporter has been updated to
+work with Ruby 2.0.0 and Nexpose 0.2.6.
+
 ================================================
 = How to run ScanPlanReporter
 ================================================
