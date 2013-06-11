@@ -1,5 +1,4 @@
 #!/usr/bin/env ruby
-
 # This script generates a comma delimited report to help with scan planning
 # The report shows the following information for every site:
 #   Site Name
@@ -14,9 +13,7 @@
  
 # March 6, 2012
 # misterpaul
-# updated June 10, 2012 to explicitly require nexpose 0.0.98
-
-gem 'nexpose', '=0.0.98'
+ 
 require 'nexpose'
 require 'time'
 require 'highline/import'
@@ -37,12 +34,14 @@ file = ask('Enter the filename to save the results into: ') { |q| q.default = de
 begin
   @nsc = Connection.new(host, user, pass, port)
   @nsc.login
+  at_exit { @nsc.logout }
  
-  sites = @nsc.site_listing || []
+  sites = @nsc.sites
  
-  # Get a list of the scanners and make a hash, indexed by id
+  # This ensures engines status is up to date.
+  @nsc.console_command('version engines')
   engine_list = {}
-  EngineListing.new(@nsc).engines.each do |engine|
+  @nsc.engines.each do |engine|
     engine_list[engine.id] = "#{engine.name} (#{engine.status})"
   end
  
@@ -52,35 +51,32 @@ begin
     File.open(file, 'w') do |file|
       file.puts 'Site Name,Last Scan Start,Last Scan Status,Last Scan Live Nodes,Last Scan Duration,Scan Template,Scan Engine,Next Scan Start,Schedule'
       sites.each do |s|
-        site = Site.new(@nsc, s[:site_id])
-        puts "site: ##{s[:site_id]}\tname: #{s[:name]}"
-        config = site.site_config
-        template = config.scanConfig.name
-        history = site.site_scan_history.scan_summaries
-        if history.empty?
-          # No scans found.
-          start_time = ''
-          status = ''
-          active = ''
-          duration = ''
-          engine_name = ''
-        else
-          latest = history.sort_by { |summary| summary.startTime }.last
-          start_time = Time.parse(latest.startTime)
+        site = Site.load(@nsc, s.id)
+        puts "site: ##{site.id}\tname: #{site.name}"
+        template = site.scan_template
+        latest = @nsc.last_scan(site.id)
+        if latest
+          start_time = latest.start_time
           status = latest.status
-          active = latest.nodes_live
-          engine_name = engine_list[latest.engine_id.to_s]
-          if latest.endTime.empty?
-            duration = ''
-          else
-            duration_sec = Time.parse(latest.endTime) - Time.parse(latest.startTime)
+          active = latest.nodes.live
+          engine_name = engine_list[site.engine]
+          if sched = site.schedules.first
+            schedule = "#{sched.type}:#{sched.interval}"
+          end
+          if latest.end_time
+            duration_sec = latest.end_time - start_time
             hours = (duration_sec / 3600).to_i
             minutes = (duration_sec / 60 - hours * 60).to_i
             seconds = (duration_sec - (minutes * 60 + hours * 3600))
             duration = sprintf('%dh %02dm %02ds', hours, minutes, seconds)
+          else
+            duration = ''
           end
+        else
+          # No scans found.
+          start_time = status = active = duration = engine_name = ''
         end
-        file.puts "#{config.site_name},#{start_time},#{status},#{active},#{duration},#{template}, #{engine_name},NEXT SCAN,SCHEDULE"
+        file.puts "#{site.name},#{start_time},#{status},#{active},#{duration},#{template},#{engine_name},NEXT SCAN,#{schedule}"
       end   
     end
   end
