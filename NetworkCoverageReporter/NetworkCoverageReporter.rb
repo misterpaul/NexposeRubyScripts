@@ -21,21 +21,22 @@ updated June 10, 2012 to explicitly require nexpose 0.0.98
 
 =end
 
-gem 'nexpose', '=0.0.98'
+#gem 'nexpose'
 require 'rubygems'
 require 'nexpose'
 require 'time'
-require 'highline/import'  
+require 'highline/import'
+include Nexpose
 
 defaultHost = "your-host"
-defaultPort = "3780"  
+defaultPort = "3780"
 defaultName = "your-nexpose-id"
 defaultFile = "NetworkCoverageReport_" + DateTime.now.strftime('%Y-%m-%d--%H%M') + ".csv"
 
 host = ask("Enter the server name (host) for NeXpose: ") { |q| q.default = defaultHost }
-port = ask ("Enter the port for NeXpose: ") { |q| q.default = defaultPort } 
-user = ask("Enter your username:  ") { |q| q.default = defaultName } 
-pass = ask("Enter your password:  ") { |q| q.echo = "*" }
+port = ask ("Enter the port for NeXpose: ") { |q| q.default = defaultPort }
+user = ask("Enter your username: ") { |q| q.default = defaultName }
+pass = ask("Enter your password: ") { |q| q.echo = "*" }
 file = ask ("Enter the filename to save the results into: ") { |q| q.default = defaultFile }
 
 
@@ -46,64 +47,71 @@ file = ask ("Enter the filename to save the results into: ") { |q| q.default = d
 # Connect and authenticate
 #
 begin
+  @nsc = Connection.new(host, user, pass, port)
+  @nsc.login
+  at_exit { @nsc.logout }
+ 
 
-	# Create a connection to the NeXpose instance
-	@nsc = Nexpose::Connection.new(host, user, pass, port)
+	# sitehash is a hash of sites, where the key is the site id
+	# and the value is the site object
+	# the purpose is to be able to get a site object from its id
+	sites = Hash.new
 
-	# Authenticate to this instance (throws an exception if this fails)
-	@nsc.login
-	
-rescue ::Nexpose::APIError => e
-	$stderr.puts ("Connection failed: #{e.reason}")
-	exit(1)
-end
+	# ips is a hash, where the key is the starting IP of a range,
+	# and the value is a list of hashes, where each hash is an IPRange object (key) and
+	# a site id (value)
+	# --start_ip-- ----- range to site map ------
+	# ip range site id
+	#{ 10.1.20.21 =>[ {10.1.20.21 - 10.1.20.22 =>1} ],
+	# 10.20.171.8 =>[ {10.20.171.8 =>1} ],
+	# 10.20.171.10=>[ {10.20.171.10 =>1} ],
+	# 10.20.172.10=>[ {10.20.172.10 =>1} ],
+	# 10.20.174.5 =>[ {10.20.174.5 - 10.20.174.6=>1} ],
+	# 10.20.176.2 =>[ {10.20.176.2 =>1} ]
+	#}
+	ips = Hash.new
 
-# sitehash is a hash of sites, where the key is the site id
-# and the value is the site object
-# the purpose is to be able to get a site object from its id
-sites = Hash.new
+	sitelist = @nsc.sites
 
-# ips is a hash, where the key is the starting IP of a range, 
-# and the value is a list of hashes, where each hash is an IPRange object (key) and
-# a site id (value)
-#  --start_ip--    ----- range to site map ------           
-#                      ip range              site id
-#{ 10.1.20.21  =>[ {10.1.20.21 - 10.1.20.22  =>1} ], 
-#  10.20.171.8 =>[ {10.20.171.8              =>1} ], 
-#  10.20.171.10=>[ {10.20.171.10             =>1} ], 
-#  10.20.172.10=>[ {10.20.172.10             =>1} ], 
-#  10.20.174.5 =>[ {10.20.174.5 - 10.20.174.6=>1} ], 
-#  10.20.176.2 =>[ {10.20.176.2              =>1} ]
-#}
-ips = Hash.new
+	sitelist.each do |s|
+		site = Site.load(@nsc, s.id)
+		sites[s.id] = s.name # site_id=>site name
+		puts ("site: ##{s.id}\tname: #{s.name}")
 
-sitelist = @nsc.site_listing
+		#require 'debug'
+		site.assets.each do |h|
+			puts h.from.class
+			if h.to.nil?
+				range = h.from.to_s
+			else
+				puts h.to.class
+				range = h.from.to_s + " - " + h.to.to_s
+			end
 
-sitelist.each do |s|
-	site = Nexpose::Site.new(@nsc, s[:site_id].to_s)
-	sites[s[:site_id]] = s                               # site_id=>site name
-	puts ("site: ##{s[:site_id]}\tname: #{s[:name]}")
-
-	#require 'debug'
-	site.site_config.hosts.each do |h|
-		range = h.from + (h.to.nil? ? "" : " - " + h.to)
-		if ips[h.from].nil?
-			ips[h.from] = [{range => s[:site_id]}]
-		else
-			ips[h.from].push( {range => s[:site_id]} )
+#			range = h.from + (h.to.nil? ? "" : " - " + h.to)
+			if ips[h.from.to_s].nil?
+				ips[h.from.to_s] = [{range => s.id}]
+			else
+				ips[h.from.to_s].push( {range => s.id} )
+			end
 		end
-	end
-end	
+	end	
 
-File.open(file, 'w') do |f| # yeah, i should use CSV.  Didn't know about it when I wrote this.
-	f.puts ("IP Range,Site")
+	File.open(file, 'w') do |f| # yeah, i should use CSV. Didn't know about it when I wrote this.
+		f.puts ("IP Range,Site")
+		require 'debug'
 
-	ips.keys.sort.each do |start_ip|
-		ips[start_ip].each do |range2site_map|
-			range2site_map.keys.each do |r|
-				#puts r.to_s + ": " + sites[range2site_map[r]][:name]
-				f.puts r.to_s + "," + sites[range2site_map[r]][:name]
+		ips.keys.sort.each do |start_ip|
+			ips[start_ip].each do |range2site_map|
+				range2site_map.keys.each do |r|
+					#puts r.to_s + ": " + sites[range2site_map[r]]
+					f.puts r.to_s + "," + sites[range2site_map[r]]
+				end
 			end
 		end
 	end
+
+rescue ::Nexpose::APIError => e
+  $stderr.puts "Failure: #{e.reason}"
+  exit(1)
 end
