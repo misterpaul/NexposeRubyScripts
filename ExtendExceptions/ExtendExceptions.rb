@@ -32,7 +32,7 @@ you can edit lines 90 & 91 to hard-code your exception numbers and skip the ques
 =end
 
 
-gem 'nexpose', '=0.2.6'
+gem 'nexpose'
 require 'rubygems'
 require 'nexpose'
 require 'highline/import'  
@@ -53,27 +53,32 @@ host = ask('Enter the server name (host) for Nexpose: ') { |q| q.default = defau
 port = ask('Enter the port for Nexpose: ') { |q| q.default = default_port.to_s }
 user = ask('Enter your username:  ') { |q| q.default = default_name }
 pass = ask('Enter your password:  ') { |q| q.echo = '*' }
-puts
-file = ask('Enter the filename for a list of current vulnerability exceptions. Enter "none" (without quotes) if you don\'t want to create the file: ') { |q| q.default = default_file }
-puts
-logfile = ask('Enter the filename to log results into: ') { |q| q.default = default_logfile }
 
 begin
 
 	# Create a connection to the NeXpose instance
-	@nsc = Connection.new(host, user, pass, port)
-	@nsc.login
-	at_exit { @nsc.logout }
+	nsc = Connection.new(host, user, pass, port)
+	nsc.login
+	if nsc.session_id
+		print "Login Successful\n\n"
+	else
+		print "Login Failure\n\n"
+	end
+	at_exit { nsc.logout }
+	
+	file = ask('Enter the filename for a list of current vulnerability exceptions. Enter "none" (without quotes) if you don\'t want to create the file: ') { |q| q.default = default_file }
+	puts
+	logfile = ask('Enter the filename to log results into: ') { |q| q.default = default_logfile }
 
 	# get all Approved vulnerability exceptions and load them in a file
-	exceptions = @nsc.vuln_exception_listing('Approved')
+	exceptions = nsc.list_vuln_exceptions('Approved')
 	unless file == 'none'
 		begin
 			CSV.open(file, 'wb') do |csv|
 
-				csv << ['Vuln ID', 'Exception ID', 'Submitter', 'Reviewer', 'Status', 'Reason', 'Scope', 'Device id', 'port', 'expiration', 'vuln key', 'submitter comment', 'reviewer comment']
+				csv << ['Exception ID', 'Vuln ID', 'Submitter', 'Reviewer', 'Status', 'Reason', 'expiration', 'submitter comment', 'reviewer comment']
 				exceptions.each do |e|
-					csv << e.values
+					csv << [e.id, e.vuln_id, e.submitter, e.reviewer, e.status, e.reason, e.expiration, e.submitter_comment, e.reviewer_comment]
 				end
 			end
 			puts
@@ -100,12 +105,15 @@ begin
 
 		idList.each do |extendId|			
 			log.puts 'Extending exception ' + extendId + ' to newDate'
-
-			updateInfo = Hash.new
-			updateInfo[:exception_id] = extendId
-			updateInfo[:expiration_date] = newDate
-			result = @nsc.vuln_exception_update_expiration_date(updateInfo)
-			puts [extendId, result]
+			extend_vuln = VulnException.new('nil','nil','nil')
+			extend_vuln.id = extendId
+			if (result = extend_vuln.update_expiration_date(nsc, newDate)) == true
+				print extendId + " successfully updated\n"
+				STDOUT.flush
+			else
+				print extendId + " - error updating\n"
+				STDOUT.flush
+			end
 		end
 	end
 
