@@ -1,5 +1,9 @@
 #!/usr/bin/env ruby
 
+# This forces the version, incase they update it again
+# and make stuff not backward-compatible.
+gem 'nexpose', '=5.1.0'
+
 =begin
 
 Network Coverage Reporter
@@ -26,12 +30,13 @@ require 'rubygems'
 require 'nexpose'
 require 'time'
 require 'highline/import'
+require 'colorize'
 include Nexpose
 
 defaultHost = "your-host"
 defaultPort = "3780"
 defaultName = "your-nexpose-id"
-defaultFile = "NetworkCoverageReport_" + DateTime.now.strftime('%Y-%m-%d--%H%M') + ".csv"
+defaultFile = "/tmp/NetworkCoverageReport_" + DateTime.now.strftime('%Y-%m-%d--%H%M') + ".csv"
 
 host = ask("Enter the server name (host) for NeXpose: ") { |q| q.default = defaultHost }
 port = ask ("Enter the port for NeXpose: ") { |q| q.default = defaultPort }
@@ -76,30 +81,33 @@ begin
 	sitelist.each do |s|
 		site = Site.load(@nsc, s.id)
 		sites[s.id] = s.name # site_id=>site name
-		puts ("site: ##{s.id}\tname: #{s.name}")
+		puts ("site: ##{s.id.to_s.magenta}\tname: #{s.name.to_s.yellow.bold}")
 
 		#require 'debug'
-		site.assets.each do |h|
-			puts h.from.class
-			if h.to.nil?
-				range = h.from.to_s
-			else
-				puts h.to.class
-				range = h.from.to_s + " - " + h.to.to_s
-			end
+		site.included_addresses.each do |h|
+			puts h.class.to_s.green.bold
+			if h.is_a?(IPRange) 
+				puts h.from.class
+				if h.to.nil?
+					range = h.from.to_s
+				else
+					puts h.to.class
+					range = h.from.to_s + " - " + h.to.to_s
+				end
 
-#			range = h.from + (h.to.nil? ? "" : " - " + h.to)
-			if ips[h.from.to_s].nil?
-				ips[h.from.to_s] = [{range => s.id}]
-			else
-				ips[h.from.to_s].push( {range => s.id} )
+#				range = h.from + (h.to.nil? ? "" : " - " + h.to)
+				if ips[h.from.to_s].nil?
+					ips[h.from.to_s] = [{range => s.id}]
+				else
+					ips[h.from.to_s].push( {range => s.id} )
+				end
 			end
 		end
 	end	
 
 	File.open(file, 'w') do |f| # yeah, i should use CSV. Didn't know about it when I wrote this.
 		f.puts ("IP Range,Site")
-		require 'debug'
+		#require 'debug'
 
 		ips.keys.sort.each do |start_ip|
 			ips[start_ip].each do |range2site_map|
